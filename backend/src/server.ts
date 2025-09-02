@@ -6,6 +6,9 @@ import prisma from './config/database';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
+import blogRoutes from './routes/blog.routes';
+import categoryRoutes from './routes/category.routes';
+import tagRoutes from './routes/tag.routes';
 
 // Load environment variables
 dotenv.config();
@@ -26,6 +29,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/tags', tagRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -34,7 +40,13 @@ app.get('/api/health', async (req, res) => {
     res.json({ 
       status: 'OK', 
       timestamp: new Date().toISOString(),
-      database: 'Connected'
+      database: 'Connected',
+      endpoints: {
+        auth: '/api/auth',
+        blog: '/api/blog',
+        categories: '/api/categories',
+        tags: '/api/tags'
+      }
     });
   } catch (error) {
     res.status(500).json({ 
@@ -43,6 +55,14 @@ app.get('/api/health', async (req, res) => {
       database: 'Disconnected'
     });
   }
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found'
+  });
 });
 
 // Error handling middleware
@@ -59,7 +79,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔐 Auth endpoints ready at /api/auth`);
+  console.log(`🔐 Auth endpoints: /api/auth`);
+  console.log(`📝 Blog endpoints: /api/blog`);
+  console.log(`📁 Category endpoints: /api/categories`);
+  console.log(`🏷️  Tag endpoints: /api/tags`);
 });
 
 // Graceful shutdown
