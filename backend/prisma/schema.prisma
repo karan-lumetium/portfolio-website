@@ -1,15 +1,146 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// User management
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  username        String    @unique
+  password        String
+  firstName       String?
+  lastName        String?
+  avatar          String?
+  bio             String?
+  isActive        Boolean   @default(true)
+  isEmailVerified Boolean   @default(false)
+  role            String    @default("USER")
+  
+  // Relations
+  posts           BlogPost[]
+  projects        Project[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+// Blog posts
+model BlogPost {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  excerpt       String?
+  content       String    @db.Text
+  featuredImage String?
+  published     Boolean   @default(false)
+  viewCount     Int       @default(0)
+  
+  // Relations
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
+  category      Category? @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  tags          Tag[]     @relation("BlogPostTags")
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  publishedAt   DateTime?
+  
+  @@map("blog_posts")
+}
+
+// Projects portfolio
+model Project {
+  id               String    @id @default(uuid())
+  title            String
+  slug             String    @unique
+  shortDescription String
+  fullDescription  String    @db.Text
+  featuredImage    String?
+  images           String[]
+  demoUrl          String?
+  githubUrl        String?
+  technologies     String[]
+  featured         Boolean   @default(false)
+  
+  // Relations
+  author           User      @relation(fields: [authorId], references: [id])
+  authorId         String
+  category         Category? @relation(fields: [categoryId], references: [id])
+  categoryId       String?
+  tags             Tag[]     @relation("ProjectTags")
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  @@map("projects")
+}
+
+// Categories for posts and projects
+model Category {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  
+  // Relations
+  posts       BlogPost[]
+  projects    Project[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@map("categories")
+}
+
+// Tags for posts and projects
+model Tag {
+  id       String      @id @default(uuid())
+  name     String      @unique
+  slug     String      @unique
+  
+  // Relations
+  posts    BlogPost[]  @relation("BlogPostTags")
+  projects Project[]   @relation("ProjectTags")
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@map("tags")
+}
+
+// Contact messages
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String    @db.Text
+  isRead    Boolean   @default(false)
+  
+  createdAt DateTime  @default(now())
+  
+  @@map("contact_messages")
+}
+
+// Page views analytics
+model PageView {
+  id        String    @id @default(uuid())
+  page      String
+  path      String
+  userAgent String?
+  ipAddress String?
+  
+  createdAt DateTime  @default(now())
+  
+  @@index([page])
+  @@index([createdAt])
+  @@map("page_views")
 }
